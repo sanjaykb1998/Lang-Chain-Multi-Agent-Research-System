@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 from readability import Document
 import trafilatura
 import re 
+from pydantic import BaseModel, Field
 
 
 load_dotenv()
@@ -16,10 +17,15 @@ os.environ["SSL_CERT_FILE"] = certifi.where()
 
 tavily = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
 
-@tool
+class SearchInput(BaseModel):
+    query: str = Field(
+        description="Search query to find information on the web"
+    )
+
+@tool(args_schema=SearchInput, return_direct=True)
 def web_search(query : str) -> str:
     """Search the web for recent and reliable information on a topic . Returns Titles , URLs and snippets."""
-    results = tavily.search(query=query,max_results=2)
+    results = tavily.search(query=query,max_results=1)
 
     out = []
 
@@ -31,9 +37,18 @@ def web_search(query : str) -> str:
     return "\n----\n".join(out)
 
 
-@tool
+class ScrapeInput(BaseModel):
+    url: str = Field(
+        description="URL of the web page to scrape and extract content from"
+    )
+
+@tool(args_schema=ScrapeInput, return_direct=True)
 def scrape_url(url: str) -> str:
     """
+    Tool Name: scrape_url
+
+    Use ONLY the tool named 'scrape_url'.
+    
     Scrape and extract clean readable content from a URL.
     Uses multiple extraction strategies for better reliability.
     """
@@ -71,7 +86,7 @@ def scrape_url(url: str) -> str:
 
         if extracted and len(extracted.strip()) > 200:
             cleaned = re.sub(r'\s+', ' ', extracted)
-            return cleaned[:5000]
+            return cleaned[:1500]
 
         # ──────────────────────────────────────────────────
         # Strategy 2 → readability
@@ -96,7 +111,7 @@ def scrape_url(url: str) -> str:
 
         if text and len(text.strip()) > 200:
             cleaned = re.sub(r'\s+', ' ', text)
-            return cleaned[:5000]
+            return cleaned[:1500]
 
         # ──────────────────────────────────────────────────
         # Strategy 3 → fallback full page extraction
@@ -119,7 +134,7 @@ def scrape_url(url: str) -> str:
         cleaned = re.sub(r'\s+', ' ', text)
 
         if cleaned:
-            return cleaned[:5000]
+            return cleaned[:1500]
 
         return "Could not extract meaningful content from the page."
 

@@ -1,10 +1,5 @@
-from src.tools.tools import scrape_url, web_search, scrape_url
-
-# output= web_search.invoke("recent advancements in AI")
-# print(output)
+from src.pipelines.pipeline import run_research_pipeline
 
 
-url = "https://www.linkedin.com/top-content/innovation/ai-trends-and-innovations/recent-breakthroughs-in-ai-technology"
-
-output= scrape_url.invoke(url)
-print(output)
+topic = "The impact of AI on the job market in 2026"
+run_research_pipeline(topic)
